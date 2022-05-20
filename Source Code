@@ -1,0 +1,208 @@
+import os
+import random
+import platform
+import datetime
+import mysql.connector    
+mydb= mysql. connector.connect (host="localhost",
+user="root", passwd="12345",database="railyatri")
+cursor=mydb.cursor()
+# Creation of Tables : 1. Train Master
+				               2.Train Timetable
+					             3.Passenger Details
+					             4. PNR Master
+# Train Master Table
+create table train_master (Train_No int(7), Train_Name char(50),Source char(40),Destination char(40))
+# Train Time Table
+create table train_timetable (Train_No int(7), Station_from char(10), Station_to char(10), Distance float(10,2), Arrival char(5), Departure char(5), Code_station_from char(5), Code_station_to char(5),Serial_No int(2))
+# Passenger Details Table
+create table passenger_details ( Pnr_No int(7), passenger_name char(15), Age char(1), Gender char(1), Disability char(1), class varchar(7), Fare float(10,2), status char(10), Date_  of_travel date)
+#PNR table (Main Table)
+create table pnr_master (PNR_No int(7),Status char(10), Train_No int(6), Source char(15), Destination char(15), No_of_passenger int(2), Date_of_travel date, Class varchar(20), Fare float(10,2))
+
+
+def railsmenu():
+       		print("\n\n\t\t\t Railway Reservation ")
+                print("\t\t\t===================\n")
+                
+                print("1. Display Train Timetable")
+                print("2. Reserve Ticket")
+                print("3. Display Reservation via PNR Number")
+                print("4. Cancellation of Ticket")
+                print("5. Quit")
+               
+ n=int(input("Enter your choice: "))
+                if(n==1):
+                                displayTrain()
+                elif(n==2):
+                                reservation()
+                elif(n==3):
+                                displayPNR()
+                elif(n==4):
+                                cancel()
+                elif(n==5):
+                              print("\t\t\t THANK YOU FOR VISITING ")
+                              print("\t\t\t HAVE A NICE DAY")
+                                  exit()
+                else:
+                              print("Wrong choice entered”)
+                print(“Select from  available options.")
+
+def displayTrain():
+                print("\t\t\t Train Detail Enquiry Window")
+                print("\t\t\t==========================\n")
+                pnr=input("Enter train number:")
+                pn=(pnr,) 
+                
+sql="select tm.train_no, train_name,station_from, station_to,  Arrival,  Departure from train_master tm join train_timetable tt on tm.train_no= tt.train_no where tm.train_no=%s order by tt.serial_no"
+
+# Joined two tables to display values of trains from table Train Master and Train Timetable.
+                cursor.execute(sql,pn)
+                res=cursor.fetchall() 
+                print("Train timetable as follows : \n")
+                print("Train No : ",res[0][0])
+                print("Train Name : ",res[0][1])
+                print("Station From\t\t Station To\t\t Arrival\t\t Departure")
+                print("========================================")
+                for x in res:
+                 print(x[2],"\t\t", x[3],"\t\t", x[4],"\t\t\t", x[5],)
+                railsmenu()
+
+def reservation():
+                print("\t\t\t RESERVATION WINDOW")
+                print("\t\t\t ====================\n")
+                lst_sr_sf=[]
+                lst_sr_st=[]
+                
+                trainno=input("Enter train number: ")
+                lst_sr_sf.append(trainno)
+                lst_sr_st.append(trainno)
+                                
+                station_from=input("Enter source station code: ")
+                station_to=input("Enter destination station code: ")
+               
+                lst_sr_sf.append(station_from)
+                lst_sr_st.append(station_to)
+                
+                Date_of_travel=input("Enter Booking Date(yyyy-mm-dd): ")
+                t1=(lst_sr_sf)
+                t2=(lst_sr_st)
+
+c="select Serial_No from Train_timetable where train_no=%s and code_station_from=%s"
+cursor.execute(c,t1)
+f=cursor.fetchone()
+z="select Serial_No from Train_timetable where train_no=%s and code_station_to=%s"
+cursor.execute(z,t2)
+u=cursor.fetchone()
+for w in u:
+for j in f:
+print()
+
+t3=(trainno,j,w)
+c2="select sum(distance) from Train_timetable where train_no=%s and serial_No between %s and %s"
+cursor.execute(c2,t3)
+f2=cursor.fetchone()
+for m in f2:
+print("Total Distance between Source station   and destination are:", m, "Km")
+print("Select your class from the options provided below :")
+                
+print("1.AC FIRST CLASS")
+                print("2.AC SECOND CLASS")
+                print("3.AC THIRD CLASS")
+                print("4.SLEEPER CLASS")   
+                cp=int(input("Enter your choice:"))
+                if(cp==1):
+                                amount=m*2.5
+                                fixed=500
+                                cls='AC1'
+                elif(cp==2):
+                                amount=m*2
+                                fixed=300
+                                cls='AC2'
+                elif(cp==3):
+                                amount=m*1.5
+                                fixed=150
+                                cls='AC3'
+                else:
+                                amount=m*0.6
+                                fixed=50
+                                cls='Sleeper'
+                fare=(fixed+amount)
+                
+                N=int(input("Enter number of passanger:"))
+                totalfare=fare*N
+
+                pnr=random.randint(111111111,999999999)
+                for i in range(1,N+1):
+                        passenger=[]
+                        Name=input("Enter Name of Passenger:")
+                        Age=int(input("Enter Age of passenger:"))
+       Gender=input("Enter Gender of Passenger:")
+                        Disability=input("Is Person Disabled (Y/N)")
+                        passenger.append(pnr)
+                        passenger.append(Name)
+                        passenger.append(Age)
+                        passenger.append(Gender)
+                        passenger.append(Disability)
+                        passenger.append(fare)
+                        final_tu=(passenger)
+sql="insert into passenger_details (PNR_No, Passenger_name, Age, Gender, Disability, fare) values (%s,%s,%s,%s,%s,%s)"
+                        cursor.execute(sql,final_tu)
+                        mydb.commit()
+
+               	print("Do you want to confirm reservation?")
+                confirmation=input("Reserve (Y/N)")
+                if confirmation=="N" or confirmation=="n":
+ sql_confirm="delete passenger_details where  PNR_No  =%s"
+                         cursor.execute(sql_confirm,pnr)
+else:                                                                                                                                                                                               status=random.choice  (["Pending","Confirmed","RAC"])
+master_lst= [pnr, status, trainno,                                                                                                                                   station_from , station_to , Date_of_travel,
+cls, totalfare]
+                  master_tu=(master_lst)
+ sql_master="insert into pnr_master                                        (PNR _No, Status, Train_No, Source, Destination, No_ Of_ Pssg ,  Date_of_travel, class, Fare) values    (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                cursor.execute(sql_master, master_tu)
+                mydb.commit()
+                print("Your PNR Number is :",pnr)
+                print("Selected Class :",cls)
+                print("Total fare:",totalfare)
+       print("========================================")
+                  railresmenu()
+
+def displayPNR():
+                print("\t\t\tPNR STATUS Window")
+ pnr=input("Enter PNR Number whose passenger   data be displayed:")
+                pn=(pnr,) 
+sql="select pm.PNR_No, convert(rtrim (Passenger_name), char(15)),Age, Gender, Disability, pm.fare, pm.status, pm.source, pm.destination, pm.date_of_travel, pm.train_no,pm. class from pnr_master pm join passenger_details pd on m.PNR_No=pd.PNR_No where pm.pnr_No=%s"
+                
+ cursor.execute(sql,pn)
+                res=cursor.fetchall() 
+                print("PNR details are as follows : \n")
+print("PNR Number:", res[0][0], "\t\t\t Date of Travel:", res[0][9])
+print("Train Number:",res[0][10],"\t\t\t Class:",res[0][11])
+print("Source station:", res[0][7],"\t\t\t Destination:", res[0][8])
+print("Status:", res[0][6],"\t\t\t Fare(INR):",res[0][5],"\n")
+print("Passenger Name \t\t Age \t\t Gender \t Disability"
+print("========================================")
+                for x in res:
+                   if len (x[1]) <= 10:
+                      print(x[1],"\t\t\t", x[2],"\t\t", x[3],"\t\t", x[4])
+                  else:
+                      print(x[1],"\t\t", x[2],"\t\t", x[3],"\t\t", x[4])
+                print("========================================")
+                railsmenu()
+
+def cancel():
+                print("\t\t\t Ticket cancel window")
+pnr=input("Enter PNR for cancellation of Ticket")
+                pn=(pnr,) 
+sql="update pnr_master set status='Cancelled' where pnr_no=%s"
+                cursor.execute(sql,pn)
+                mydb.commit()
+                print("Ticket cancelled")
+print(“========================================”)                
+               railsmenu()
+                                
+def displayexit():
+                print("\t\t\t THANK YOU FOR VISITING ")
+                print("\t\t\t HAVE A NICE DAY")
+                exit()
+railsmenu()
